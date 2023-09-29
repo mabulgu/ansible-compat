@@ -403,11 +403,17 @@ class AnsibleConfig(UserDict[str, object]):  # pylint: disable=too-many-ancestor
             env = os.environ.copy()
             # Avoid possible ANSI garbage
             env["ANSIBLE_FORCE_COLOR"] = "0"
-            config_dump = subprocess.check_output(
-                ["ansible-config", "dump"],  # noqa: S603
-                universal_newlines=True,
-                env=env,
-            )
+            ansible_config_executable = "ansible-config"
+            try:
+                subprocess.check_output([ansible_config_executable, "--help"])
+            except FileNotFoundError:
+                ansible_config_executable = f"{sys.exec_prefix}/bin/ansible-config"
+            finally:
+                config_dump = subprocess.check_output(
+                    [ansible_config_executable, "dump"],  # noqa: S603
+                    universal_newlines=True,
+                    env=env,
+                )
 
         for match in re.finditer(
             r"^(?P<key>[A-Za-z0-9_]+).* = (?P<value>.*)$",
